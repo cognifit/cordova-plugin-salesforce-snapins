@@ -77,8 +77,6 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
                 }
             }
 
-            // TODO: here add SOS and Case management initializations
-
             callbackContext.success();
 
         } else if (action.equals("openLiveAgentChat")) {
@@ -87,9 +85,16 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
             result.setKeepCallback(true);
             callbackContext.sendPluginResult(result);
 
-            Activity mainActivity = this.cordova.getActivity();
+            /** If we show the stuff non-minimized then we have an overlaid activity that doesn't go away */
 
-            ChatUI.configure(ChatUIConfiguration.create(this.buildLiveAgentChatConfig()))
+            Activity mainActivity = this.cordova.getActivity();
+            ChatUIConfiguration configuration = new ChatUIConfiguration.Builder()
+                .chatConfiguration(this.buildLiveAgentChatConfig())
+                .disablePreChatView(true)
+                .defaultToMinimized(true)
+                .build();
+
+            ChatUI.configure(configuration)
                 .createClient(getApplicationContext())
                 .onResult(new Async.ResultHandler<ChatUIClient>() {
                     @Override public void handleResult (Async<?> operation, @NonNull ChatUIClient chatUIClient) {
@@ -174,7 +179,6 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         String value;
         boolean isRequired;
         int keyboardType;
-//        int autocorrectionType; // not used on Android
         JSONArray values;
 
         try {
@@ -206,12 +210,6 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         } catch (JSONException e) {
             keyboardType = 0;
         }
-
-//        try {
-//            autocorrectionType = (int) field.get("autocorrectionType");
-//        } catch (JSONException e) {
-//            autocorrectionType = 0;
-//        }
 
         try {
             values = (JSONArray) field.get("values");
