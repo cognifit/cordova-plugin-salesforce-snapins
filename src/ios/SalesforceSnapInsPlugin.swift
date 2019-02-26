@@ -45,42 +45,42 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
 
     private var liveAgentChatConfig: SCSChatConfiguration?
 
-    // TODO: here add SOS and Case management configuration
-
     override func pluginInitialize () {
-        if #available(iOS 10.0, *) {
-            let center = UNUserNotificationCenter.current()
-            center.delegate = SalesforceSnapInsPlugin.shared()
-            center.requestAuthorization(options: [.alert,.sound], completionHandler: { granted, error in
-                // Enable or disable features based on authorization
-            })
-            let generalCategory = UNNotificationCategory(identifier: "General", actions: [], intentIdentifiers: [], options: .customDismissAction)
-            let categorySet: Set<UNNotificationCategory> = [generalCategory]
-            center.setNotificationCategories(categorySet)
-        }
+        // we don't support notifications
+        // if #available(iOS 10.0, *) {
+        //     let center = UNUserNotificationCenter.current()
+        //     center.delegate = SalesforceSnapInsPlugin.shared()
+        //     center.requestAuthorization(options: [.alert,.sound], completionHandler: { granted, error in
+        //         // Enable or disable features based on authorization
+        //     })
+        //     let generalCategory = UNNotificationCategory(identifier: "General", actions: [], intentIdentifiers: [], options: .customDismissAction)
+        //     let categorySet: Set<UNNotificationCategory> = [generalCategory]
+        //     center.setNotificationCategories(categorySet)
+        // }
     }
 
     @objc func initialize(_ command: CDVInvokedUrlCommand) {
 
         guard let options = command.argument(at: 0) as? Dictionary<String, Any> else {
-            return self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Missing options"), callbackId: command.callbackId)
+            self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Missing options"), callbackId: command.callbackId)
+            return
         }
 
         if let colors = options["colors"] as? Dictionary<String, String> {
             if let colorsErrorMessage = self.initializeColors(colors) {
-                return self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: colorsErrorMessage), callbackId: command.callbackId)
+                self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: colorsErrorMessage), callbackId: command.callbackId)
+                return
             }
         }
 
         if let liveAgentOptions = options["liveAgentChat"] as? Dictionary<String, Any> {
             if let liveAgentErrorMessage = self.initializeLiveAgentChat(liveAgentOptions) {
-                return self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: liveAgentErrorMessage), callbackId: command.callbackId)
+                self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: liveAgentErrorMessage), callbackId: command.callbackId)
+                return
             }
         }
 
-        // TODO: here add SOS and Case management initializations
-
-        self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
+        self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
     }
 
     // MARK: - Live Agent Chat
@@ -162,10 +162,6 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
             self.setAppearanceColor(appearance, color: hexStringToUIColor(aHexString), forName: aColorName)
         }
 
-        // TODO: customize font
-        // let descriptor = UIFontDescriptor(fontAttributes: [UIFontDescriptor.AttributeName.family : "Proxima Nova"])
-        // config.setFontDescriptor(descriptor, fontFileName: "ProximaNova-Light.otf", forWeight: SCFontWeightLight)
-
         ServiceCloud.shared().appearanceConfiguration = appearance
 
         return nil;
@@ -174,11 +170,13 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
     @objc func addPrechatField(_ command: CDVInvokedUrlCommand) {
 
         guard let field = command.argument(at: 0) as? Dictionary<String, Any> else {
-            return self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Missing field"), callbackId: command.callbackId)
+            self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Missing field"), callbackId: command.callbackId)
+            return
         }
 
         guard let config = self.liveAgentChatConfig else {
-            return self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Initialize plugin with liveAgentChat option before add pre-chat field"), callbackId: command.callbackId)
+            self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Initialize plugin with liveAgentChat option before add pre-chat field"), callbackId: command.callbackId)
+            return
         }
 
         let type = field["type"] as? String ?? "text"
@@ -207,33 +205,37 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
                     let aPickerOptionValue = aValue["value"] as? String ?? ""
                     pickerOptions.add(SCSPrechatPickerOption(label: aPickerOptionLabel, value: aPickerOptionValue))
                 }
-                let pickerField = SCSPrechatPickerObject(label: label, options: pickerOptions as NSArray as! [SCSPrechatPickerOption])
+                let pickerField = SCSPrechatPickerObject(label: label, options: pickerOptions as NSArray as? [SCSPrechatPickerOption])
                 pickerField!.isRequired = isRequired
-                config.prechatFields.add(pickerField!)
+                config.prechatFields.append(pickerField!)
             }
         default:
-            return self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Unknown field type \(type)"), callbackId: command.callbackId)
+            self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Unknown field type \(type)"), callbackId: command.callbackId)
+            return
         }
 
-        self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
+        self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
     }
 
     @objc func clearPrechatFields(_ command: CDVInvokedUrlCommand) {
         guard let config = self.liveAgentChatConfig else {
-            return self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Initialize plugin with liveAgentChat option before clear pre-chat fields"), callbackId: command.callbackId)
+            self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Initialize plugin with liveAgentChat option before clear pre-chat fields"), callbackId: command.callbackId)
+            return
         }
         // Remove old pre-chat fields
         config.prechatFields.removeAll()
-        self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
+        self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
     }
 
     @objc func addPrechatEntity(_ command: CDVInvokedUrlCommand) {
         guard let field = command.argument(at: 0) as? Dictionary<String, Any> else {
-            return self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Missing entity"), callbackId: command.callbackId)
+            self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Missing entity"), callbackId: command.callbackId)
+            return
         }
 
         guard let config = self.liveAgentChatConfig else {
-            return self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Initialize plugin with liveAgentChat option before add pre-chat entity"), callbackId: command.callbackId)
+            self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Initialize plugin with liveAgentChat option before add pre-chat entity"), callbackId: command.callbackId)
+            return
         }
 
         let name = field["name"] as? String ?? "entity"
@@ -267,30 +269,39 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
 
         config.prechatEntities.append(newEntity)
 
-        self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
+        self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
     }
 
     @objc func clearPrechatEntities(_ command: CDVInvokedUrlCommand) {
         guard let config = self.liveAgentChatConfig else {
-            return self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Initialize plugin with liveAgentChat option before clear pre-chat entities"), callbackId: command.callbackId)
+            self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Initialize plugin with liveAgentChat option before clear pre-chat entities"), callbackId: command.callbackId)
+            return
         }
         // Remove old pre-chat fields
         config.prechatEntities.removeAll()
-        self.commandDelegate!.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
+        self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
     }
 
     @objc func openLiveAgentChat(_ command: CDVInvokedUrlCommand) {
-        let chat = ServiceCloud.shared().chatCore!
-        let config = self.liveAgentChatConfig!
+        guard let chat = ServiceCloud.shared().chatCore, let config = self.liveAgentChatConfig else {
+            let result = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Nil core/config")
+            self.commandDelegate?.send(result, callbackId: command.callbackId)
+            return
+        }
+        
         chat.startSession(with: config)
         let result: CDVPluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
-        commandDelegate!.send(result, callbackId: command.callbackId)
+        self.commandDelegate?.send(result, callbackId: command.callbackId)
     }
 
     @objc func determineAvailability(_ command: CDVInvokedUrlCommand) {
-        let chat = ServiceCloud.shared().chatCore!
-        let config = self.liveAgentChatConfig!
-        let commandDelegate = self.commandDelegate!
+        guard let chat = ServiceCloud.shared().chatCore, let config = self.liveAgentChatConfig else {
+            let result = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Nil core/config")
+            self.commandDelegate?.send(result, callbackId: command.callbackId)
+            return
+        }
+        
+        let commandDelegate = self.commandDelegate
         chat.determineAvailability(with: config, completion: { (error: Error?, available: Bool) in
             var result: CDVPluginResult
             if (error != nil) {
@@ -300,7 +311,7 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
             } else {
                 result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: false)
             }
-            commandDelegate.send(result, callbackId: command.callbackId)
+            commandDelegate?.send(result, callbackId: command.callbackId)
         })
     }
 
