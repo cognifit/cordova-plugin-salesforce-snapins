@@ -5,12 +5,9 @@ allprojects {
     maven {
       url 'https://s3.amazonaws.com/salesforcesos.com/android/maven/release'
     }
-    maven {
-      url 'http://tokbox.bintray.com/maven/'
-    }
   }
 }
 
 dependencies {
-  implementation 'com.salesforce.service:servicesdk:214.0.1'
+  implementation 'com.salesforce.service:chat-ui:3.3.0'
 }
