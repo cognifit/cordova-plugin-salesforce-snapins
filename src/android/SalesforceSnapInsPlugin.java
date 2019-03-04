@@ -90,7 +90,7 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
             Activity mainActivity = this.cordova.getActivity();
             ChatUIConfiguration configuration = new ChatUIConfiguration.Builder()
                 .chatConfiguration(this.buildLiveAgentChatConfig())
-                .disablePreChatView(true)
+                .disablePreChatView(false)
                 .defaultToMinimized(true)
                 .build();
 
@@ -98,7 +98,7 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
                 .createClient(getApplicationContext())
                 .onResult(new Async.ResultHandler<ChatUIClient>() {
                     @Override public void handleResult (Async<?> operation, @NonNull ChatUIClient chatUIClient) {
-                        chatUIClient.startChatSession((FragmentActivity) mainActivity);
+                        chatUIClient.startChatSession(mainActivity);
                         callbackContext.success();
                     }
                 });
@@ -177,6 +177,7 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         String type;
         String label;
         String value;
+        String transcriptField;
         boolean isRequired;
         int keyboardType;
         JSONArray values;
@@ -197,6 +198,12 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
             value = (String) field.get("value");
         } catch (JSONException e) {
             value = "empty";
+        }
+
+        try {
+            transcriptField = (String) field.get("transcriptField");
+        } catch (JSONException e) {
+            transcriptField = "";
         }
 
         try {
@@ -222,7 +229,7 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
                 PreChatTextInputField newTextField = new PreChatTextInputField.Builder()
                         .required(isRequired)
                         .inputType(this.mapKeyboardType(keyboardType))
-                        // .mapToChatTranscriptFieldName("Email__c") // Method not supported on iOS
+                        .mapToChatTranscriptFieldName(transcriptField)
                         .build(label, label);
                 this.liveAgentChatUserData.add(newTextField);
                 break;
@@ -231,7 +238,7 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
                 ChatUserData newHiddenField = new ChatUserData(
                         label,
                         value,
-                        true);
+                        true, transcriptField);
                 this.liveAgentChatUserData.add(newHiddenField);
                 break;
 
@@ -239,6 +246,7 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
                 if (values.length() > 0) {
                     PreChatPickListField.Builder newPickerFieldBuilder = new PreChatPickListField.Builder();
                     newPickerFieldBuilder.required(isRequired);
+                    newPickerFieldBuilder.mapToChatTranscriptFieldName(transcriptField);
 
                     JSONObject aField;
                     String aLabel;
