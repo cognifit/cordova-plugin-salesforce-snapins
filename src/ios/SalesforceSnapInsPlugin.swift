@@ -80,6 +80,13 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
             }
         }
         
+        if let caseConfiguration = options["caseConfiguration"] as? Dictionary<String, Any> {
+            if let caseErrorMessage = self.initializeCaseWithConfiguration (caseConfiguration) {
+                self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: caseErrorMessage), callbackId: command.callbackId)
+                return
+            }
+        }
+        
         self.commandDelegate?.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
     }
     
@@ -115,6 +122,23 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
         self.liveAgentChatConfig?.allowMinimization = true
         
         return nil;
+    }
+    
+    func initializeCaseWithConfiguration (_ configuration: Dictionary<String, Any>) -> String? {
+        guard let communityUrlString = configuration["communityUrl"] as? String else {
+            return "Missing caseConfig.communityUrl"
+        }
+        guard let communityUrl = URL (string: communityUrlString) else {
+            return "Invalid caseConfig.communityUrl"
+        }
+        guard let caseActionName = configuration["caseActionName"] as? String else {
+            return "Invalid case.actionName"
+        }
+        
+        self.caseConfiguration = SCSServiceConfiguration (community: communityUrl)
+        self.caseActionName = caseActionName
+        
+        return nil
     }
     
     func setAppearanceColor(_ appearance: SCAppearanceConfiguration, color: UIColor, forName: String) {
@@ -327,6 +351,27 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
             }
             commandDelegate?.send(result, callbackId: command.callbackId)
         })
+    }
+    
+    @objc func openCaseManager (_ command: CDVInvokedUrlCommand) {
+        guard let configuration = self.caseConfiguration else {
+            let result = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Nil case/config")
+            self.commandDelegate?.send(result, callbackId: command.callbackId)
+            return
+        }
+        guard let caseActionName = self.caseActionName else {
+            let result = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Nil case/actionName")
+            self.commandDelegate?.send(result, callbackId: command.callbackId)
+            return
+        }
+        
+        let serviceCloud = ServiceCloud.shared()
+        serviceCloud.serviceConfiguration = configuration
+        serviceCloud.cases.caseCreateActionName = caseActionName
+        serviceCloud.cases.setInterfaceVisible (true, animated: true, completion: nil)
+        
+        let result: CDVPluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
+        self.commandDelegate?.send(result, callbackId: command.callbackId)
     }
     
     // MARK: - UNUserNotificationCenterDelegate
