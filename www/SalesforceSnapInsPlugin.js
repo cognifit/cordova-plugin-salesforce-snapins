@@ -219,4 +219,24 @@ SalesforceSnapInsPlugin.prototype.determineAvailability = function determineAvai
     return this;
 };
 
+/**
+ * Open the Case Manager panel.
+ * @version 1.0.0
+ * @param  {function} success -
+ * @param  {function} error -
+ * @return {SalesforceSnapInsPlugin} - Instance of the plugin
+ * @example
+ * cordova.plugin.SalesforceSnapIns.openCaseManager(function() {
+ *   console.log('It works! :P');
+ * }, function (err) {
+ *   console.error(err);
+ * });
+ */
+SalesforceSnapInsPlugin.prototype.openCaseManager = function openCaseManager(success, error) {
+    if (!success) success = successCallback;
+    if (!error) error = errorCallback;
+    exec(success, error, 'SalesforceSnapInsPlugin', 'openCaseManager', [ ]);
+    return this;
+};
+
 module.exports = new SalesforceSnapInsPlugin();
