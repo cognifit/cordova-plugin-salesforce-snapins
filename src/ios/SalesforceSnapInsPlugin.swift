@@ -113,6 +113,10 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
             return "Missing liveAgentChat.buttonId"
         }
         
+        guard let visitorName = options["visitorName"] as? String else {
+            return "Missing liveAgentChat.visitorName"
+        }
+        
         self.liveAgentPod = liveAgentPod
         self.orgId = orgId
         self.deploymentId = deploymentId
@@ -123,6 +127,7 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
                                                         deploymentId: deploymentId,
                                                         buttonId: buttonId)
         self.liveAgentChatConfig?.allowMinimization = true
+        self.liveAgentChatConfig?.visitorName = visitorName
         
         return nil;
     }
