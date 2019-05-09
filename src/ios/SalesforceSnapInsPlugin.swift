@@ -214,6 +214,7 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
         let keyboardType = field["keyboardType"] as? Int ?? 0
         let autocorrectionType = field["autocorrectionType"] as? Int ?? 0
         let values = field["values"] as? [Dictionary<String, Any>]
+        let maximumLength = field["maximumLength"] as? UInt ?? 0
         
         switch type {
         case "text":
@@ -221,6 +222,9 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
             newTextField.isRequired = isRequired
             newTextField.keyboardType = UIKeyboardType(rawValue: keyboardType)!
             newTextField.autocorrectionType = UITextAutocorrectionType(rawValue: autocorrectionType)!
+            if (maximumLength > 0) {
+                newTextField.maxLength = maximumLength
+            }
             if transcriptField != nil {
                 newTextField.transcriptFields.add(transcriptField!)
             }
