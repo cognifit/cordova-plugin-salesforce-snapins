@@ -48,7 +48,8 @@ xmlns:android="http://schemas.android.com/apk/res/android">
 			<source url="https://github.com/CocoaPods/Specs.git" />
 			<source url="https://github.com/goinstant/pods-specs-public" />
 		</pods-config>
-		<pod name="ServiceSDK/Chat" spec="218.0.0" />
+		<pod name="ServiceSDK/Chat" spec="220.0.0" />
+		<pod name="ServiceSDK/Cases" spec="220.0.0" />
 
 		<config-file parent="/*" target="config.xml">
 			<feature name="SalesforceSnapInsPlugin">
