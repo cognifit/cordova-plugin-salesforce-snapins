@@ -44,6 +44,8 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
     var buttonId: String?
     
     private var liveAgentChatConfig: SCSChatConfiguration?
+    private var caseConfiguration: SCSServiceConfiguration?
+    private var caseActionName: String?
     
     override func pluginInitialize () {
         // we don't support notifications
