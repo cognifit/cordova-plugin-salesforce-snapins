@@ -9,6 +9,7 @@ import Foundation
 import UserNotifications
 import ServiceCore
 import ServiceChat
+import ServiceCases
 
 func hexStringToUIColor(_ hex: String) -> UIColor {
     var cString:String = hex.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
