@@ -228,6 +228,7 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         String transcriptField;
         boolean isRequired;
         int keyboardType;
+        int maximumLength;
         JSONArray values;
 
         try {
@@ -267,6 +268,12 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         }
 
         try {
+            maximumLength = (int) field.get("maximumLength");
+        } catch (JSONException e) {
+            maximumLength = 0;
+        }
+
+        try {
             values = (JSONArray) field.get("values");
         } catch (JSONException e) {
             values = new JSONArray();
@@ -274,11 +281,16 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
 
         switch (type) {
             case "text":
-                PreChatTextInputField newTextField = new PreChatTextInputField.Builder()
+                PreChatTextInputField.Builder newTextFieldBuilder = new PreChatTextInputField.Builder()
                         .required(isRequired)
                         .inputType(this.mapKeyboardType(keyboardType))
-                        .mapToChatTranscriptFieldName(transcriptField)
-                        .build(label, label);
+                        .mapToChatTranscriptFieldName(transcriptField);
+
+                if (maximumLength > 0) {
+                    newTextFieldBuilder.maxValueLength(maximumLength);
+                }
+
+                PreChatTextInputField newTextField = newTextFieldBuilder.build(label, label);
                 this.liveAgentChatUserData.add(newTextField);
                 break;
 
