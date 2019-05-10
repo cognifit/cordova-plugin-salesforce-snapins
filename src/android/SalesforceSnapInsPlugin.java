@@ -18,6 +18,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.salesforce.android.cases.core.CaseConfiguration;
+import com.salesforce.android.cases.ui.CaseUI;
+import com.salesforce.android.cases.ui.CaseUIClient;
+import com.salesforce.android.cases.ui.CaseUIConfiguration;
 import com.salesforce.android.chat.core.AgentAvailabilityClient;
 import com.salesforce.android.chat.core.ChatConfiguration;
 import com.salesforce.android.chat.core.ChatCore;
@@ -39,6 +43,7 @@ import java.util.List;
 public class SalesforceSnapInsPlugin extends CordovaPlugin {
 
     private ChatConfiguration.Builder liveAgentChatConfigBuilder;
+    private CaseConfiguration.Builder caseConfigurationBuilder;
     private List<ChatUserData> liveAgentChatUserData = new ArrayList<ChatUserData>();
     private List<ChatEntity> liveAgentChatEntities = new ArrayList<ChatEntity>();
 
@@ -55,6 +60,8 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         if (action.equals("initialize")) {
             JSONObject options;
             JSONObject liveAgentChatOptions;
+            JSONObject caseConfiguration;
+
             try {
                 options = (JSONObject)args.get(0);
             } catch (JSONException e) {
@@ -73,6 +80,21 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
                     this.initializeLiveAgentChat(liveAgentChatOptions);
                 } catch (JSONException e) {
                     callbackContext.error("Unable parse options.liveAgentChat parameters");
+                    return false;
+                }
+            }
+
+            if (options.has("caseConfiguration")) {
+                try {
+                    caseConfiguration = (JSONObject) options.get("caseConfiguration");
+                } catch (JSONException e) {
+                    callbackContext.error("Unable parse options.caseConfiguration");
+                    return false;
+                }
+                try {
+                    this.initializeCaseWithConfiguration(caseConfiguration);
+                } catch (JSONException e) {
+                    callbackContext.error("Unable parse options.caseConfiguration parameters");
                     return false;
                 }
             }
@@ -127,6 +149,25 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
                         }
                     }
                 });
+        } else if (action.equals("openCaseManager")) {
+
+            PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
+            result.setKeepCallback(true);
+            callbackContext.sendPluginResult(result);
+
+            Activity mainActivity = this.cordova.getActivity();
+            CaseUI.with(mainActivity).configure(CaseUIConfiguration.create(caseConfigurationBuilder.build()));
+
+            // Create a client UI asynchronously
+            CaseUI.with(mainActivity).uiClient()
+                    .onResult(new Async.ResultHandler<CaseUIClient>() {
+                        @Override public void handleResult(Async<?> async,
+                                                           @NonNull CaseUIClient caseUIClient) {
+                            caseUIClient.launch(mainActivity);
+                            callbackContext.success();
+                        }
+                    });
+
         } else if (action.equals("addPrechatField")) {
 
             JSONObject field;
@@ -165,6 +206,13 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         String buttonId = (String) options.get("buttonId");
 
         this.liveAgentChatConfigBuilder = new ChatConfiguration.Builder(orgId, buttonId, deploymentId, liveAgentPod);
+    }
+
+    private void initializeCaseWithConfiguration(JSONObject configuration) throws JSONException {
+        String communityUrl = (String) configuration.get("communityUrl");
+        String createCaseActionName = (String) configuration.get("caseActionName");
+
+        this.caseConfigurationBuilder = new CaseConfiguration.Builder(communityUrl, createCaseActionName);
     }
 
     private ChatConfiguration buildLiveAgentChatConfig() {
