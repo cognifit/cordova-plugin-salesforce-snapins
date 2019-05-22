@@ -18,9 +18,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.salesforce.android.cases.core.CaseConfiguration;
 import com.salesforce.android.cases.ui.CaseUI;
-import com.salesforce.android.cases.ui.CaseUIClient;
 import com.salesforce.android.cases.ui.CaseUIConfiguration;
 import com.salesforce.android.chat.core.AgentAvailabilityClient;
 import com.salesforce.android.chat.core.ChatConfiguration;
@@ -35,6 +33,9 @@ import com.salesforce.android.chat.ui.ChatUIConfiguration;
 import com.salesforce.android.service.common.utilities.control.Async;
 import com.salesforce.android.chat.ui.model.PreChatTextInputField;
 import com.salesforce.android.chat.ui.model.PreChatPickListField;
+import com.salesforce.android.cases.core.CaseConfiguration;
+import com.salesforce.android.cases.ui.CaseUIConfiguration;
+import com.salesforce.android.cases.ui.CaseUIClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +44,9 @@ import java.util.List;
 public class SalesforceSnapInsPlugin extends CordovaPlugin {
 
     private ChatConfiguration.Builder liveAgentChatConfigBuilder;
-    private CaseConfiguration.Builder caseConfigurationBuilder;
     private List<ChatUserData> liveAgentChatUserData = new ArrayList<ChatUserData>();
     private List<ChatEntity> liveAgentChatEntities = new ArrayList<ChatEntity>();
+    private CaseConfiguration.Builder caseConfigurationBuilder;
 
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
     }
@@ -61,7 +62,6 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
             JSONObject options;
             JSONObject liveAgentChatOptions;
             JSONObject caseConfiguration;
-
             try {
                 options = (JSONObject)args.get(0);
             } catch (JSONException e) {
@@ -150,23 +150,21 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
                     }
                 });
         } else if (action.equals("openCaseManager")) {
-
             PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
             result.setKeepCallback(true);
             callbackContext.sendPluginResult(result);
 
             Activity mainActivity = this.cordova.getActivity();
-            CaseUI.with(mainActivity).configure(CaseUIConfiguration.create(caseConfigurationBuilder.build()));
+            CaseUIConfiguration caseUIConfiguration = CaseUIConfiguration.create(this.caseConfigurationBuilder.build());
 
-            // Create a client UI asynchronously
-            CaseUI.with(mainActivity).uiClient()
-                    .onResult(new Async.ResultHandler<CaseUIClient>() {
-                        @Override public void handleResult(Async<?> async,
-                                                           @NonNull CaseUIClient caseUIClient) {
-                            caseUIClient.launch(mainActivity);
-                            callbackContext.success();
-                        }
-                    });
+            CaseUI.with(mainActivity).configure(caseUIConfiguration);
+            CaseUI.with(mainActivity).uiClient().onResult(new Async.ResultHandler<CaseUIClient>() {
+                @Override public void handleResult(Async<?> async, @NonNull CaseUIClient caseUIClient) {
+                    // AFAIK this never fails so we can always callback with 'success'
+                    caseUIClient.launch(mainActivity);
+                    callbackContext.success();
+                }
+            });
 
         } else if (action.equals("addPrechatField")) {
 
@@ -208,11 +206,11 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         this.liveAgentChatConfigBuilder = new ChatConfiguration.Builder(orgId, buttonId, deploymentId, liveAgentPod);
     }
 
-    private void initializeCaseWithConfiguration(JSONObject configuration) throws JSONException {
-        String communityUrl = (String) configuration.get("communityUrl");
-        String createCaseActionName = (String) configuration.get("caseActionName");
+    private void initializeCaseWithConfiguration(JSONObject options) throws JSONException {
+        String communityUrlString = (String) options.get("communityUrl");
+        String caseActionName = (String) options.get("caseActionName");
 
-        this.caseConfigurationBuilder = new CaseConfiguration.Builder(communityUrl, createCaseActionName);
+        this.caseConfigurationBuilder = new CaseConfiguration.Builder(communityUrlString, caseActionName);
     }
 
     private ChatConfiguration buildLiveAgentChatConfig() {
@@ -228,7 +226,6 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         String transcriptField;
         boolean isRequired;
         int keyboardType;
-        int maximumLength;
         JSONArray values;
 
         try {
@@ -268,12 +265,6 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         }
 
         try {
-            maximumLength = (int) field.get("maximumLength");
-        } catch (JSONException e) {
-            maximumLength = 0;
-        }
-
-        try {
             values = (JSONArray) field.get("values");
         } catch (JSONException e) {
             values = new JSONArray();
@@ -281,16 +272,11 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
 
         switch (type) {
             case "text":
-                PreChatTextInputField.Builder newTextFieldBuilder = new PreChatTextInputField.Builder()
+                PreChatTextInputField newTextField = new PreChatTextInputField.Builder()
                         .required(isRequired)
                         .inputType(this.mapKeyboardType(keyboardType))
-                        .mapToChatTranscriptFieldName(transcriptField);
-
-                if (maximumLength > 0) {
-                    newTextFieldBuilder.maxValueLength(maximumLength);
-                }
-
-                PreChatTextInputField newTextField = newTextFieldBuilder.build(label, label);
+                        .mapToChatTranscriptFieldName(transcriptField)
+                        .build(label, label);
                 this.liveAgentChatUserData.add(newTextField);
                 break;
 
