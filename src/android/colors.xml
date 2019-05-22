@@ -1,3 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="salesforce_brand_primary">#005d5d</color>
+    <color name="salesforce_brand_secondary">#005d5d</color>
+    <color name="salesforce_contrast_primary">#727272</color>
+    <color name="salesforce_contrast_inverted">#f3ede6</color>
+    <color name="salesforce_toolbar">#005d5d</color>
+    <color name="salesforce_toolbar_inverted">#ffffff</color>
 </resources>
