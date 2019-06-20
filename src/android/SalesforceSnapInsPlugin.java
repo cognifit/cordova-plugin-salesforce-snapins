@@ -19,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.salesforce.android.cases.core.CaseConfiguration;
+import com.salesforce.android.cases.core.CaseClientCallbacks;
 import com.salesforce.android.cases.ui.CaseUI;
 import com.salesforce.android.cases.ui.CaseUIClient;
 import com.salesforce.android.cases.ui.CaseUIConfiguration;
@@ -125,6 +126,39 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
                     }
                 });
 
+        } else if (action.equals("openLiveAgentChatWithUsername")) {
+            String username;
+            String email;
+
+            try {
+                username = (String)args.get(0);
+                email = (String)args.get(1);
+            } catch (JSONException e) {
+                callbackContext.error("No username or email provided");
+                return false;
+            }
+
+            PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
+            result.setKeepCallback(true);
+            callbackContext.sendPluginResult(result);
+            this.setupChatWithUsername(username, email);
+
+            /** If we show the stuff non-minimized then we have an overlaid activity that doesn't go away */
+            Activity mainActivity = this.cordova.getActivity();
+            ChatUIConfiguration configuration = new ChatUIConfiguration.Builder()
+                    .chatConfiguration(this.buildLiveAgentChatConfig())
+                    .disablePreChatView(true)
+                    .defaultToMinimized(true)
+                    .build();
+
+            ChatUI.configure(configuration)
+                    .createClient(getApplicationContext())
+                    .onResult(new Async.ResultHandler<ChatUIClient>() {
+                        @Override public void handleResult (Async<?> operation, @NonNull ChatUIClient chatUIClient) {
+                            chatUIClient.startChatSession(mainActivity);
+                            callbackContext.success();
+                        }
+                    });
         } else if (action.equals("determineAvailability")) {
 
             PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
@@ -157,6 +191,47 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
 
             Activity mainActivity = this.cordova.getActivity();
             CaseUI.with(mainActivity).configure(CaseUIConfiguration.create(caseConfigurationBuilder.build()));
+
+            // Create a client UI asynchronously
+            CaseUI.with(mainActivity).uiClient()
+                    .onResult(new Async.ResultHandler<CaseUIClient>() {
+                        @Override public void handleResult(Async<?> async,
+                                                           @NonNull CaseUIClient caseUIClient) {
+                            caseUIClient.launch(mainActivity);
+                            callbackContext.success();
+                        }
+                    });
+
+        } else if (action.equals("openCaseManagerWithUsername")) {
+            String username;
+            String email;
+
+            try {
+                username = (String)args.get(0);
+                email = (String)args.get(1);
+            } catch (JSONException e) {
+                callbackContext.error("No username or email provided");
+                return false;
+            }
+
+            CaseClientCallbacks caseCallback = new CaseClientCallbacks() {
+                @Override
+                public Map<String, String> getHiddenFields() {
+                    HashMap<String, String> hiddenFields = new HashMap<>();
+                    hiddenFields.put("Status", "New");
+                    hiddenFields.put("Subject", "Android App - Read description");
+                    hiddenFields.put("SuppliedEmail", email);
+                    hiddenFields.put("SuppliedName", username);
+                    return hiddenFields;
+                }
+            };
+
+            PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
+            result.setKeepCallback(true);
+            callbackContext.sendPluginResult(result);
+
+            Activity mainActivity = this.cordova.getActivity();
+            CaseUI.with(mainActivity).configure(CaseUIConfiguration.create(caseConfigurationBuilder.callbacks(caseCallback).build()));
 
             // Create a client UI asynchronously
             CaseUI.with(mainActivity).uiClient()
@@ -207,7 +282,7 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
 
         this.liveAgentChatConfigBuilder = new ChatConfiguration.Builder(orgId, buttonId, deploymentId, liveAgentPod);
     }
-
+    
     private void initializeCaseWithConfiguration(JSONObject configuration) throws JSONException {
         String communityUrl = (String) configuration.get("communityUrl");
         String createCaseActionName = (String) configuration.get("caseActionName");
@@ -496,6 +571,30 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
 
     private boolean clearPrechatEntities(CallbackContext callbackContext) {
         this.liveAgentChatEntities.clear();
+        return true;
+    }
+    
+    private boolean setupChatWithUsername(String username, String email) {
+        this.liveAgentChatUserData.clear();
+        this.liveAgentChatEntities.clear();
+        this.liveAgentChatConfigBuilder.visitorName(username);
+
+        ChatUserData emailField = new ChatUserData("Email", email, true, "Email");
+        this.liveAgentChatUserData.add(emailField);
+
+        ChatEntityField emailEntityField = new ChatEntityField.Builder()
+                .doFind(true)
+                .doCreate(true)
+                .isExactMatch(true)
+                .build("Email", emailField);
+
+        ChatEntity contactEntity = new ChatEntity.Builder()
+                .showOnCreate(true)
+                .addChatEntityField(emailEntityField)
+                .build("Contact");
+
+        this.liveAgentChatEntities.add(contactEntity);
+
         return true;
     }
 
