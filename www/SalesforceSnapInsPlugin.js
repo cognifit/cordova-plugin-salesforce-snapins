@@ -186,6 +186,27 @@ SalesforceSnapInsPlugin.prototype.openLiveAgentChat = function openLiveAgentChat
 };
 
 /**
+ * Open the Live Agent Chat panel with a given 'username' (visitor's name) and email (so a Contact can be linked).
+ * If you want to check the presence of an agent use the method SalesforceSnapInsPlugin.determineAvailability.
+ * @version 1.0.0
+ * @param  {function} success -
+ * @param  {function} error -
+ * @return {SalesforceSnapInsPlugin} - Instance of the plugin
+ * @example
+ * cordova.plugin.SalesforceSnapIns.openLiveAgentChat(username, email, function() {
+ *   console.log('It works! :P');
+ * }, function (err) {
+ *   console.error(err);
+ * });
+ */
+SalesforceSnapInsPlugin.prototype.openLiveAgentChatWithUsername = function openLiveAgentChatWithUsername(username, email, success, error) {
+    if (!success) success = successCallback;
+    if (!error) error = errorCallback;
+    exec(success, error, 'SalesforceSnapInsPlugin', 'openLiveAgentChatWithUsername', [ username, email ]);
+    return this;
+};
+
+/**
  * Check the availability of a agent
  * @version 1.0.0
  * @param  {function} success - (available) if available is true it's safe to call SalesforceSnapInsPlugin.openLiveAgent
@@ -236,6 +257,27 @@ SalesforceSnapInsPlugin.prototype.openCaseManager = function openCaseManager(suc
     if (!success) success = successCallback;
     if (!error) error = errorCallback;
     exec(success, error, 'SalesforceSnapInsPlugin', 'openCaseManager', [ ]);
+    return this;
+};
+
+/**
+ * Open the Case Manager panel and hides a preset collection of fields, and sets "SupliedName" and "SuppliedEmail" to
+ * the given values.
+ * @version 1.0.0
+ * @param  {function} success -
+ * @param  {function} error -
+ * @return {SalesforceSnapInsPlugin} - Instance of the plugin
+ * @example
+ * cordova.plugin.SalesforceSnapIns.openCaseManagerWithUsername(username, email, function() {
+ *   console.log('It works! :P');
+ * }, function (err) {
+ *   console.error(err);
+ * });
+ */
+SalesforceSnapInsPlugin.prototype.openCaseManagerWithUsername = function openCaseManagerWithUsername(username, email, success, error) {
+    if (!success) success = successCallback;
+    if (!error) error = errorCallback;
+    exec(success, error, 'SalesforceSnapInsPlugin', 'openCaseManagerWithUsername', [ username, email ]);
     return this;
 };
 
