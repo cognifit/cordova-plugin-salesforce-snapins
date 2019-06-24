@@ -580,7 +580,7 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         this.liveAgentChatEntities.clear();
         this.liveAgentChatConfigBuilder.visitorName(username);
 
-        ChatUserData emailField = new ChatUserData("Email", email, true, "Email");
+        ChatUserData emailField = new ChatUserData("Email", email, true);
         this.liveAgentChatUserData.add(emailField);
 
         ChatEntityField emailEntityField = new ChatEntityField.Builder()
@@ -592,6 +592,7 @@ public class SalesforceSnapInsPlugin extends CordovaPlugin {
         ChatEntity contactEntity = new ChatEntity.Builder()
                 .showOnCreate(true)
                 .addChatEntityField(emailEntityField)
+                .linkToTranscriptField("ContactId")
                 .build("Contact");
 
         this.liveAgentChatEntities.add(contactEntity);
