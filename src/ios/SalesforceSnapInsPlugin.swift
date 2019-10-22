@@ -352,7 +352,7 @@ func hexStringToUIColor(_ hex: String) -> UIColor {
         }
         
         let commandDelegate = self.commandDelegate
-        chat.determineAvailability(with: config, completion: { (error: Error?, available: Bool) in
+        chat.determineAvailability(with: config, completion: { (error: Error?, available: Bool, _ :TimeInterval) in
             var result: CDVPluginResult
             if (error != nil) {
                 result = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "error")
