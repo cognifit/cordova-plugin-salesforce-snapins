@@ -54,8 +54,6 @@ xmlns:android="http://schemas.android.com/apk/res/android">
 			</feature>
             		<preference name="SwiftVersion" value="5" />
 		</config-file>
-
-		<header-file src="src/ios/SalesforceSnapIns-Plugin-Bridging-Header.h" />
 		<source-file src="src/ios/SalesforceSnapInsPlugin.swift" />
 	</platform>
 </plugin>
